@@ -1,4 +1,10 @@
 # FYP
+"Project Descsription Here"
+
+## Github Repo Structure
+Main: Final product
+Staging: Test the integration of new features expected to be in the final product
+
 ## Python VENV
 Please ensure that you're working in the venv
 If you have any new packages, you can use 'pip freeze > requirements.txt' to create a new requirements sheet
