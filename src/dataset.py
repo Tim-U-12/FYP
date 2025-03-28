@@ -6,7 +6,8 @@ import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 
 IMG_SIZE = 224
-DATA_DIR = "data/UTKFace"
+DATA_DIR = "../data/UTKFace"
+CACHE_PATH = "../data/utkface_data.npz"
 
 def extract_labels(filename):
     try:
@@ -39,6 +40,24 @@ def get_image_filepaths_and_labels():
             races.append(race)
 
     return filepaths, np.array(age_bins), np.array(genders), np.array(races)
+
+def load_or_process_data():
+    if os.path.exists(CACHE_PATH):
+        print("Loading cached data...")
+        data = np.load(CACHE_PATH, allow_pickle=True)
+        filepaths = data["filepaths"].tolist()
+        age_bins = data["age_bins"]
+        genders = data["genders"]
+        races = data["races"]
+    else:
+        print("Processing dataset...")
+        filepaths, age_bins, genders, races = get_image_filepaths_and_labels()
+        np.savez(CACHE_PATH,
+                filepaths=np.array(filepaths),
+                age_bins=age_bins,
+                genders=genders,
+                races=races)
+    return filepaths, age_bins, genders, races
 
 class UTKFaceSequence(Sequence):
     def __init__(self, filepaths, age_labels, gender_labels, race_labels, batch_size=32, shuffle=True):
@@ -88,19 +107,14 @@ class UTKFaceSequence(Sequence):
             self.gender_labels = self.gender_labels[indices]
             self.race_labels = self.race_labels[indices]
 
-if __name__ == "__main__":
-    # Step 1: Get all filepaths and labels
-    filepaths, age_bins, genders, races = get_image_filepaths_and_labels()
+def get_generators(batch_size=32, test_size=0.2, shuffle=True):
+    filepaths, age_bins, genders, races = load_or_process_data()
 
-    # Step 2: Split into train/test
     train_paths, test_paths, y_age_train, y_age_test, y_gender_train, y_gender_test, y_race_train, y_race_test = train_test_split(
-        filepaths, age_bins, genders, races, test_size=0.2, random_state=42
+        filepaths, age_bins, genders, races, test_size=test_size, random_state=42
     )
 
-    # Step 3: Create generators
-    train_gen = UTKFaceSequence(train_paths, y_age_train, y_gender_train, y_race_train, batch_size=32)
-    test_gen = UTKFaceSequence(test_paths, y_age_test, y_gender_test, y_race_test, batch_size=32)
+    train_gen = UTKFaceSequence(train_paths, y_age_train, y_gender_train, y_race_train, batch_size=batch_size, shuffle=shuffle)
+    test_gen = UTKFaceSequence(test_paths, y_age_test, y_gender_test, y_race_test, batch_size=batch_size, shuffle=False)
 
-    # ✅ Generators ready for model training!
-    print("UTKFace generators ready.")
-    print(f"Train batches: {len(train_gen)} | Test batches: {len(test_gen)}")
+    return train_gen, test_gen
