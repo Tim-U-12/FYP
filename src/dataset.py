@@ -4,6 +4,9 @@ import cv2
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence  # type: ignore
+from tensorflow.keras.utils import to_categorical # type: ignore
+
+from collections import Counter
 
 IMG_SIZE = 224
 DATA_DIR = "../data/UTKFace"
@@ -17,9 +20,7 @@ def extractLabels(filename):
         return None
 
 def ageToBin(age):
-    if age > 100:
-        return 11
-    return age // 10
+    return min(age // 10, 9)
 
 def getImageFilepathsAndLabels():
     filepaths = []
@@ -38,6 +39,14 @@ def getImageFilepathsAndLabels():
             age_bins.append(ageToBin(age))
             genders.append(gender)
             races.append(race)
+
+    ageCount = Counter(age_bins)
+    genderCount = Counter(genders)
+    raceCount = Counter(races)
+
+    print("age count:" + str(ageCount))
+    print("gender count:" + str(genderCount))
+    print("race count:" + str(raceCount))
 
     return filepaths, np.array(age_bins), np.array(genders), np.array(races)
 
@@ -69,6 +78,11 @@ class UTKFaceSequence(Sequence):
         self.shuffle = shuffle
         self.onEpochEnd()
 
+        # Infer number of classes
+        self.num_age_bins = 10
+        self.num_gender_classes = 2
+        self.num_race_classes = 5
+
     def __len__(self):
         return int(np.ceil(len(self.filepaths) / self.batch_size))
 
@@ -85,18 +99,28 @@ class UTKFaceSequence(Sequence):
                 try:
                     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
                     img = img / 255.0
-                    batch_images.append(img)
                 except:
-                    batch_images.append(np.zeros((IMG_SIZE, IMG_SIZE, 3)))  # fallback image
+                    img = np.zeros((IMG_SIZE, IMG_SIZE, 3))
             else:
-                batch_images.append(np.zeros((IMG_SIZE, IMG_SIZE, 3)))  # fallback if unreadable
+                img = np.zeros((IMG_SIZE, IMG_SIZE, 3))
+            batch_images.append(img)
 
         X = np.array(batch_images, dtype=np.float32)
+
+        # Ensure age labels are within the valid range (0 to 9)
+        batch_ages = np.clip(batch_ages, 0, self.num_age_bins - 1)
+
+        # One-hot encode the labels
+        y_age = to_categorical(batch_ages, num_classes=self.num_age_bins)
+        y_gender = to_categorical(batch_genders, num_classes=self.num_gender_classes)
+        y_race = to_categorical(batch_races, num_classes=self.num_race_classes)
+
         return X, {
-            'age': batch_ages,
-            'gender': batch_genders,
-            'race': batch_races
-        }
+            'age_output': y_age,
+            'gender_output': y_gender,
+            'race_output': y_race
+    }
+
 
     def onEpochEnd(self):
         if self.shuffle:

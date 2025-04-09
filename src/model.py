@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input  # type
 from tensorflow.keras.optimizers import Adam  # type: ignore
 from utils import singleTestModel
 
-if __name__ == "__main__":
+def buildModel():
     # Input shape should match your image size, e.g., 224x224x3
     input_tensor = Input(shape=(224, 224, 3))
 
@@ -40,3 +40,5 @@ if __name__ == "__main__":
             'race_output': 'accuracy'
         }
     )
+
+    return model

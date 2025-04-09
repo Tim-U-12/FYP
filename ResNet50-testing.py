@@ -1,6 +1,6 @@
 import tensorflow as tf
-from keras.applications import ResNet50
-from keras.applications.resnet50 import preprocess_input, decode_predictions
+from keras.applications import ResNet50 # type: ignore
+from keras.applications.resnet50 import preprocess_input, decode_predictions # type: ignore
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
