@@ -3,45 +3,45 @@ import numpy as np
 import cv2
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras.utils import Sequence
+from tensorflow.keras.utils import Sequence  # type: ignore
 
 IMG_SIZE = 224
 DATA_DIR = "../data/UTKFace"
 CACHE_PATH = "../data/utkface_data.npz"
 
-def extract_labels(filename):
+def extractLabels(filename):
     try:
         age, gender, race = filename.split("_")[:3]
         return int(age), int(gender), int(race)
     except:
         return None
 
-def age_to_bin(age):
+def ageToBin(age):
     if age > 100:
         return 11
     return age // 10
 
-def get_image_filepaths_and_labels():
+def getImageFilepathsAndLabels():
     filepaths = []
     age_bins = []
     genders = []
     races = []
 
     for fname in os.listdir(DATA_DIR):
-        label = extract_labels(fname)
+        label = extractLabels(fname)
         if label:
             age, gender, race = label
             img_path = os.path.join(DATA_DIR, fname)
             if not os.path.isfile(img_path):
                 continue
             filepaths.append(img_path)
-            age_bins.append(age_to_bin(age))
+            age_bins.append(ageToBin(age))
             genders.append(gender)
             races.append(race)
 
     return filepaths, np.array(age_bins), np.array(genders), np.array(races)
 
-def load_or_process_data():
+def loadOrProcessData():
     if os.path.exists(CACHE_PATH):
         print("Loading cached data...")
         data = np.load(CACHE_PATH, allow_pickle=True)
@@ -51,7 +51,7 @@ def load_or_process_data():
         races = data["races"]
     else:
         print("Processing dataset...")
-        filepaths, age_bins, genders, races = get_image_filepaths_and_labels()
+        filepaths, age_bins, genders, races = getImageFilepathsAndLabels()
         np.savez(CACHE_PATH,
                 filepaths=np.array(filepaths),
                 age_bins=age_bins,
@@ -67,7 +67,7 @@ class UTKFaceSequence(Sequence):
         self.race_labels = race_labels
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.on_epoch_end()
+        self.onEpochEnd()
 
     def __len__(self):
         return int(np.ceil(len(self.filepaths) / self.batch_size))
@@ -98,7 +98,7 @@ class UTKFaceSequence(Sequence):
             'race': batch_races
         }
 
-    def on_epoch_end(self):
+    def onEpochEnd(self):
         if self.shuffle:
             indices = np.arange(len(self.filepaths))
             np.random.shuffle(indices)
@@ -107,8 +107,8 @@ class UTKFaceSequence(Sequence):
             self.gender_labels = self.gender_labels[indices]
             self.race_labels = self.race_labels[indices]
 
-def get_generators(batch_size=32, test_size=0.2, shuffle=True):
-    filepaths, age_bins, genders, races = load_or_process_data()
+def getGenerators(batch_size=32, test_size=0.2, shuffle=True):
+    filepaths, age_bins, genders, races = loadOrProcessData()
 
     train_paths, test_paths, y_age_train, y_age_test, y_gender_train, y_gender_test, y_race_train, y_race_test = train_test_split(
         filepaths, age_bins, genders, races, test_size=test_size, random_state=42

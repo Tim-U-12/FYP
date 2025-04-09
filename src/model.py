@@ -1,8 +1,8 @@
-from dataset import get_generators
-from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input
-from tensorflow.keras.optimizers import Adam
+from dataset import getGenerators
+from tensorflow.keras.applications import ResNet50  # type: ignore
+from tensorflow.keras.models import Model  # type: ignore
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input  # type: ignore
+from tensorflow.keras.optimizers import Adam  # type: ignore
 from utils import singleTestModel
 
 if __name__ == "__main__":
@@ -20,13 +20,13 @@ if __name__ == "__main__":
     x = GlobalAveragePooling2D()(base_model.output)
 
     # Example: 3 separate outputs
-    age_output = Dense(10, activation='softmax', name='age_output')(x)     # e.g., 10 age bins
+    age_output = Dense(10, activation='softmax', name='age_output')(x)       # e.g., 10 age bins
     gender_output = Dense(2, activation='softmax', name='gender_output')(x)  # Male/Female
-    race_output = Dense(5, activation='softmax', name='race_output')(x)     # 5 races?
+    race_output = Dense(5, activation='softmax', name='race_output')(x)      # 5 races?
 
     # Build model
     model = Model(inputs=input_tensor, outputs=[age_output, gender_output, race_output])
-    
+
     model.compile(
         optimizer=Adam(learning_rate=1e-4),
         loss={
