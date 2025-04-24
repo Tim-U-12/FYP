@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence  # type: ignore
 from tensorflow.keras.utils import to_categorical # type: ignore
+from utils import UTKLabelType
 
 from collections import Counter
 
@@ -22,12 +23,10 @@ def extractLabels(filename):
 def ageToBin(age):
     return min(age // 10, 9)
 
-def getImageFilepathsAndLabels():
+def getImageFilepathsAndLabels(dataLabel: UTKLabelType):
     filepaths = []
-    age_bins = []
-    genders = []
-    races = []
-
+    labelValues = []
+    
     for fname in os.listdir(DATA_DIR):
         label = extractLabels(fname)
         if label:
@@ -36,19 +35,29 @@ def getImageFilepathsAndLabels():
             if not os.path.isfile(img_path):
                 continue
             filepaths.append(img_path)
-            age_bins.append(ageToBin(age))
-            genders.append(gender)
-            races.append(race)
+            
+            if dataLabel == UTKLabelType.AGE:
+                labelValues.append(ageToBin(age))
+            elif dataLabel == UTKLabelType.GENDER:
+                labelValues.append(gender)
+            elif dataLabel == UTKLabelType.RACE:
+                labelValues.append(race)
+            else:
+                raise Exception("Incorrect dataLabel")
+    
+    labelCount= Counter(labelValues)
+    print("{labelCount}".format(labelCount))
+    return filepaths, np.array(labelValues)
 
-    ageCount = Counter(age_bins)
-    genderCount = Counter(genders)
-    raceCount = Counter(races)
 
-    print("age count:" + str(ageCount))
-    print("gender count:" + str(genderCount))
-    print("race count:" + str(raceCount))
+# Alter the following to Cache Multiple files
+'''
+1. I want to add multiple 
 
-    return filepaths, np.array(age_bins), np.array(genders), np.array(races)
+
+'''
+
+
 
 def loadOrProcessData():
     if os.path.exists(CACHE_PATH):
