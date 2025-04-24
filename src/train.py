@@ -1,14 +1,20 @@
-from utils import singleTestModel
+from utils import singleTestModel, UTKLabelType, removeCorruptImages
 from dataset import getGenerators
 from model import buildModel
 
-
 if __name__ == "__main__":
-    train_gen, test_gen = getGenerators(batch_size=32)
+    removeCorruptImages
+    # Choose the label type you want to train on
+    labelType = UTKLabelType.GENDER  # Change to AGE or RACE as needed
 
-    model = buildModel()
+    # Get generators for training and testing
+    train_gen, test_gen = getGenerators(labelType=labelType, batch_size=32)
+
+    # Build and compile the model for the chosen label type
+    model = buildModel(labelType)
     model.summary()
     
+    # Train the model
     model.fit(
         train_gen,
         validation_data=test_gen,
@@ -16,6 +22,5 @@ if __name__ == "__main__":
         verbose=1
     )
 
-    
-    predictIMG = singleTestModel("../test-face.jpg")
-    
+    # Single image prediction
+    predictIMG = singleTestModel("../test-face.jpg", model=model, labelType=labelType)
