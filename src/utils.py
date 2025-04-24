@@ -1,8 +1,12 @@
 from tensorflow.keras.preprocessing import image # type: ignore
 from tensorflow.keras.applications.resnet50 import preprocess_input # type: ignore
+from enum import Enum, auto
 import numpy as np
 
-from dataset import loadOrProcessData
+class UTKLabelType(Enum):
+    AGE = auto()
+    GENDER = auto()
+    RACE = auto()
 
 def singleTestModel(img_path):
     # Load the image
@@ -14,8 +18,3 @@ def singleTestModel(img_path):
     img_array = preprocess_input(img_array)  # apply ResNet50 preprocessing
     return img_array
 
-if __name__ == "__main__":
-    IMG_SIZE = 224
-    DATA_DIR = "../data/UTKFace"
-    CACHE_PATH = "../data/utkface_data.npz"
-    loadOrProcessData()
