@@ -1,3 +1,4 @@
+import csv
 import os
 import numpy as np
 import cv2
@@ -21,6 +22,12 @@ def extractLabels(filename):
         return int(age), int(gender), int(race)
     except:
         return None
+
+def extractCSVLabels(csvFilePath, dataLabel: UTKLabelType):
+    with open(csvFilePath, newline="") as file:
+        reader = csv.reader(file)
+        columns = list(zip(*reader))
+        return list(columns[0]), list(columns[dataLabel.value])
 
 def ageToBin(age):
     return min(age // 10, 9)
@@ -67,7 +74,6 @@ def loadOrProcessData(dataLabel: UTKLabelType):
                 dataValues=dataValues)
         labelData = dataValues  # assign the variable properly
     return filepaths, labelData
-
 
 class UTKFaceSequence(Sequence):
     def __init__(self, labelType, filepaths, data, batch_size=32, shuffle=True):
