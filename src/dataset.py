@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence  # type: ignore
 from tensorflow.keras.utils import to_categorical # type: ignore
+from tensorflow.keras.applications.resnet50 import preprocess_input # type:ignore
 from utils import UTKLabelType
 
 from collections import Counter
@@ -100,7 +101,7 @@ class UTKFaceSequence(Sequence):
             if img is not None:
                 try:
                     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
-                    img = img / 255.0
+                    img = preprocess_input(img)   
                 except:
                     img = np.zeros((IMG_SIZE, IMG_SIZE, 3))
             else:

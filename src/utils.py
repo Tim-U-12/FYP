@@ -2,8 +2,8 @@ from tensorflow.keras.preprocessing import image # type: ignore
 from tensorflow.keras.applications.resnet50 import preprocess_input # type: ignore
 from enum import Enum, auto
 import numpy as np
-from PIL import Image
-import os
+from PIL import Image, UnidentifiedImageError
+import os, sys, io
 
 class UTKLabelType(Enum):
     AGE = auto()
@@ -33,12 +33,18 @@ def singleTestModel(img_path, model, labelType: UTKLabelType):
     else:
         return "Invalid label type"
 
-def removeCorruptImages():
-    for fname in os.listdir("../data/UTKFace"):
-        fpath = os.path.join("../data/UTKFace", fname)
+def removeCorruptImages(folder):
+    removed = 0
+    for fname in os.listdir(folder):
+        fpath = os.path.join(folder, fname)
+        if not os.path.isfile(fpath):
+            continue
+
         try:
-            img = Image.open(fpath)
-            img.verify()
-        except Exception as e:
-            print(f"Corrupt: {fpath}, error: {e}")
-            os.remove(fpath) 
+            with Image.open(fpath) as img:
+                img.verify()
+        except (UnidentifiedImageError, OSError, IOError) as e:
+            print(f"🗑️ Removing: {fpath} ← {e}")
+            os.remove(fpath)
+            removed += 1
+    print(f"\nRemoved {removed} corrupt or unreadable images.")
