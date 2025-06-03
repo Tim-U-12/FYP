@@ -3,7 +3,7 @@ from utils import UTKLabelType, removeCorruptImages, singleTestModel
 from keras.models import load_model # type: ignore
 
 if __name__ == "__main__":
-    data_location = "../data/UTKFace"
+    data_location = "data/UTKFace"
     removeCorruptImages(data_location)
     # Choose the label type you want to train on
     labelType = UTKLabelType.RACE  # Change to AGE or RACE as needed
