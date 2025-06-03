@@ -12,7 +12,7 @@ from utils import UTKLabelType
 from collections import Counter
 
 IMG_SIZE = 224
-DATA_DIR = "../data/UTKFace"
+DATA_DIR = "./data/UTKFace"
 AGE_BINS = 9
 
 
@@ -26,8 +26,25 @@ def extractLabels(filename):
 def extractCSVLabels(csvFilePath, dataLabel: UTKLabelType):
     with open(csvFilePath, newline="") as file:
         reader = csv.reader(file)
+        next(reader)
         columns = list(zip(*reader))
-        return list(columns[0]), list(columns[dataLabel.value])
+        paths = [path.replace("\\", "/") for path in columns[0]]
+        labels = list(columns[dataLabel.value])
+
+        valid_paths = []
+        valid_labels = []
+
+        for path, label in zip(paths, labels):
+            full_path = os.path.join("data/UTKFace", os.path.basename(path))  # ensure full path
+            img = cv2.imread(full_path)
+            if img is not None:
+                valid_paths.append(full_path)
+                valid_labels.append(int(label))  # ensure labels are int
+            else:
+                print(f"Skipping unreadable file: {full_path}")
+
+        return valid_paths, valid_labels
+
 
 def ageToBin(age):
     return min(age // 10, 9)
@@ -35,16 +52,20 @@ def ageToBin(age):
 def getImageFilepathsAndLabels(dataLabel: UTKLabelType):
     filepaths = []
     labelValues = []
-    
+
     for fname in os.listdir(DATA_DIR):
         label = extractLabels(fname)
         if label:
             age, gender, race = label
             img_path = os.path.join(DATA_DIR, fname)
+            
             if not os.path.isfile(img_path):
                 continue
+            img = cv2.imread(img_path)
+            if img is None:
+                print(f"Skipping unreadable file: {img_path}")
+                continue
             filepaths.append(img_path)
-            
             if dataLabel == UTKLabelType.AGE:
                 labelValues.append(ageToBin(age))
             elif dataLabel == UTKLabelType.GENDER:
@@ -53,12 +74,11 @@ def getImageFilepathsAndLabels(dataLabel: UTKLabelType):
                 labelValues.append(race)
             else:
                 raise Exception("Incorrect dataLabel")
-    
-    labelCount= Counter(labelValues)
+    labelCount = Counter(labelValues)
     print("{}".format(labelCount))
     return filepaths, np.array(labelValues)
 
-CACHE_PATH_TEMPLATE = "../data/{}.npz"
+CACHE_PATH_TEMPLATE = "data/{}.npz"
 def loadOrProcessData(dataLabel: UTKLabelType):
     CACHE_PATH = CACHE_PATH_TEMPLATE.format(dataLabel)
     if os.path.exists(CACHE_PATH):
@@ -126,11 +146,9 @@ class UTKFaceSequence(Sequence):
             indices = np.arange(len(self.filepaths))
             np.random.shuffle(indices)
             self.filepaths = [self.filepaths[i] for i in indices]
-            self.data = self.data[indices]
+            self.data = np.array(self.data)[indices]
 
-def getGenerators(labelType: UTKLabelType, batch_size=32, test_size=0.2, shuffle=True):
-    filepaths, label_data = loadOrProcessData(labelType)
-
+def getGenerators(filepaths: list, label_data:list, labelType: UTKLabelType, batch_size=32, test_size=0.2, shuffle=True):
     train_paths, test_paths, y_train, y_test = train_test_split(
         filepaths, label_data, test_size=test_size, random_state=42, shuffle=shuffle
     )
