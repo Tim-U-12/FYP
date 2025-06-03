@@ -1,27 +1,45 @@
 from utils import singleTestModel, UTKLabelType, removeCorruptImages
-from dataset import getGenerators
+from dataset import extractCSVLabels, getGenerators, loadOrProcessData
 from model import buildModel
 from keras.models import load_model # type: ignore
 import os
 
 if __name__ == "__main__":
-    data_location = "../data/UTKFace"
-    removeCorruptImages(data_location)
-    # Choose the label type you want to train on
-    labelType = UTKLabelType.RACE  # Change to AGE or RACE as needed
+    data_location = "data/UTKFace"
+    #removeCorruptImages(data_location)
+    labelType = UTKLabelType.RACE
+    
+    ###################################################################
+    # Unbalanced 
+    ###################################################################
+    
+    # filepaths, label_data = loadOrProcessData(labelType)
+    # train_gen, test_gen = getGenerators(filepaths, label_data, labelType=labelType, batch_size=32)
+    # model = buildModel(labelType)
+    
+    # model.fit(
+    #     train_gen,
+    #     validation_data=test_gen,
+    #     epochs=10,
+    #     verbose=1
+    # )
+    
+    # model.save(f"../models/{labelType}_unbal.keras")
+    
+    ###################################################################
+    # Balanced 
+    ###################################################################
 
-    # Get generators for training and testing
-    train_gen, test_gen = getGenerators(labelType=labelType, batch_size=32)
-
-    # Build and compile the model for the chosen label type
+    csvPath = f"./data/BalancedDatasets/balanced{labelType.name}.csv"
+    filepaths, label_data = extractCSVLabels(csvPath,labelType)
+    train_gen, test_gen = getGenerators(filepaths, label_data, labelType=labelType, batch_size=32)
     model = buildModel(labelType)
     
-    # Train the model
     model.fit(
         train_gen,
         validation_data=test_gen,
         epochs=10,
         verbose=1
     )
-
-    model.save(f"../models/{labelType}.keras")
+    
+    model.save(f"./models/{labelType}_bal.keras") 
