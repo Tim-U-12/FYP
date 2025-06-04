@@ -47,7 +47,7 @@ def extractCSVLabels(csvFilePath, dataLabel: UTKLabelType):
 
 
 def ageToBin(age):
-    return min(age // 10, 9)
+    return min(age // 10, 7)
 
 def getImageFilepathsAndLabels(dataLabel: UTKLabelType):
     filepaths = []
