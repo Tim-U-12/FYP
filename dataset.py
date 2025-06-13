@@ -1,13 +1,13 @@
 import os
 import numpy as np
-import cv2
+#import cv2
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras.utils import Sequence
+from keras.utils import Sequence
 
 IMG_SIZE = 224
-DATA_DIR = "../data/UTKFace"
-CACHE_PATH = "../data/utkface_data.npz"
+DATA_DIR = "./data/UTKFace"
+CACHE_PATH = "./data/utkface_data.npz"
 
 def extract_labels(filename):
     try:
