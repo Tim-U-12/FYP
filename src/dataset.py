@@ -13,7 +13,7 @@ from collections import Counter
 
 IMG_SIZE = 224
 DATA_DIR = "./data/UTKFace"
-AGE_BINS = 9
+AGE_BINS = 6
 
 
 def extractLabels(filename):
@@ -36,18 +36,19 @@ def extractCSVLabels(csvFilePath, dataLabel: UTKLabelType):
 
         for path, label in zip(paths, labels):
             full_path = os.path.join("data/UTKFace", os.path.basename(path))  # ensure full path
-            img = cv2.imread(full_path)
-            if img is not None:
-                valid_paths.append(full_path)
-                valid_labels.append(int(label))  # ensure labels are int
-            else:
+            try:
+                img = cv2.imread(full_path)
+                if img is not None:
+                    valid_paths.append(full_path)
+                    valid_labels.append(ageToBin(int(label)))  # ensure labels are int
+            except Exception as e:
                 print(f"Skipping unreadable file: {full_path}")
+                print(f"Error reading file {full_path}: {e}")
 
         return valid_paths, valid_labels
 
-
 def ageToBin(age):
-    return min(age // 10, 7)
+    return min(age // 10, AGE_BINS)
 
 def getImageFilepathsAndLabels(dataLabel: UTKLabelType):
     filepaths = []
@@ -106,7 +107,7 @@ class UTKFaceSequence(Sequence):
 
         # Infer number of classes
         if labelType == UTKLabelType.AGE:
-            self.num_of_classes = 10
+            self.num_of_classes = AGE_BINS + 1
         elif labelType == UTKLabelType.GENDER:
             self.num_of_classes = 2
         elif labelType == UTKLabelType.RACE: 

@@ -3,6 +3,7 @@ from tensorflow.keras.models import Model  # type: ignore
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input  # type: ignore
 from tensorflow.keras.optimizers import Adam  # type: ignore
 from utils import UTKLabelType
+from dataset import AGE_BINS
 
 def buildModel(labelType: UTKLabelType):
     input_tensor = Input(shape=(224, 224, 3))
@@ -15,7 +16,7 @@ def buildModel(labelType: UTKLabelType):
     x = GlobalAveragePooling2D()(base_model.output)
 
     if labelType == UTKLabelType.AGE:
-        output = Dense(10, activation='softmax', name='data_output')(x)
+        output = Dense(AGE_BINS + 1, activation='softmax', name='data_output')(x)
         loss = 'categorical_crossentropy'
         metrics = ['accuracy']
     elif labelType == UTKLabelType.GENDER:

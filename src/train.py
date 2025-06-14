@@ -1,4 +1,4 @@
-from utils import singleTestModel, UTKLabelType, removeCorruptImages
+from utils import UTKLabelType, removeCorruptImages, evaluateModel
 from dataset import ageToBin, extractCSVLabels, getGenerators, loadOrProcessData
 from model import buildModel
 from keras.models import load_model # type: ignore
@@ -6,7 +6,7 @@ import os
 
 if __name__ == "__main__":
     data_location = "data/UTKFace"
-    removeCorruptImages(data_location)
+    # removeCorruptImages(data_location)
     labelType = UTKLabelType.AGE
     
     ###################################################################
@@ -33,10 +33,6 @@ if __name__ == "__main__":
     csvPath = f"./data/BalancedDatasets/balanced{labelType.name}.csv"
     filepaths, label_data = extractCSVLabels(csvPath,labelType)
 
-    for i in range(len(label_data)):
-        label_data[i] = ageToBin(label_data[i])
-    print(label_data)
-
     train_gen, test_gen = getGenerators(filepaths, label_data, labelType=labelType, batch_size=32)
     model = buildModel(labelType)
     
@@ -47,4 +43,10 @@ if __name__ == "__main__":
         verbose=1
     )
     
-    model.save(f"./models/{labelType}_bal.keras") 
+    model.save(f"./models/{labelType}_bal.keras")
+
+    ###################################################################
+    # Evaluate the model 
+    ###################################################################
+    
+    evaluateModel(model, test_gen, labelType)
